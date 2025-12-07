@@ -17,7 +17,6 @@ export const CartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const { isAuthenticated } = useAuth();
 
-  // Fetch cart when user logs in
   useEffect(() => {
     if (isAuthenticated) {
       fetchCart();
@@ -26,7 +25,6 @@ export const CartProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  // Fetch cart from backend
   const fetchCart = async () => {
     try {
       setLoading(true);
@@ -39,7 +37,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Add item to cart
   const addToCart = async (productId, size, color, qty = 1) => {
     try {
       const { data } = await axios.post('/cart', {
@@ -58,7 +55,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Update cart item quantity
   const updateCartItem = async (itemId, qty) => {
     try {
       const { data } = await axios.put(`/cart/${itemId}`, { qty });
@@ -72,7 +68,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Remove item from cart
   const removeFromCart = async (itemId) => {
     try {
       const { data } = await axios.delete(`/cart/${itemId}`);
@@ -86,7 +81,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Clear cart
   const clearCart = async () => {
     try {
       await axios.delete('/cart');
@@ -100,7 +94,6 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  // Get cart item count
   const getCartCount = () => {
     return cart?.items?.reduce((total, item) => total + item.qty, 0) || 0;
   };
