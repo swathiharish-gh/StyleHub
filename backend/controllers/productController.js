@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // @route   GET /api/products
 // @access  Public
 const getProducts = asyncHandler(async (req, res) => {
-  const pageSize = 12;
+  const pageSize = Number(req.query.limit) || 12;
   const page = Number(req.query.page) || 1;
 
   // Build query object based on filters
@@ -49,7 +49,16 @@ const getProducts = asyncHandler(async (req, res) => {
 
   // Search keyword (searches in name, description, tags)
   if (req.query.keyword) {
-    query.$text = { $search: req.query.keyword };
+    // Use regex for partial matching (more flexible than $text)
+    const keyword = req.query.keyword;
+    query.$or = [
+      { name: { $regex: keyword, $options: 'i' } },
+      { description: { $regex: keyword, $options: 'i' } },
+      { tags: { $regex: keyword, $options: 'i' } },
+      { brand: { $regex: keyword, $options: 'i' } },
+      { category: { $regex: keyword, $options: 'i' } },
+      { subcategory: { $regex: keyword, $options: 'i' } }
+    ];
   }
 
   // Count total products matching query
