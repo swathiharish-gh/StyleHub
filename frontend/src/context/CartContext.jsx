@@ -15,7 +15,9 @@ export const useCart = () => {
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated } = useAuth();
+
+  // GET THE AUTH TOKEN HERE
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,10 +27,17 @@ export const CartProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
+  // COMMON CONFIG FOR AUTH HEADERS
+  const authConfig = () => ({
+    headers: {
+      Authorization: `Bearer ${user?.token}`,
+    },
+  });
+
   const fetchCart = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('/cart');
+      const { data } = await axios.get('/cart', authConfig());
       setCart(data.data);
     } catch (error) {
       console.error('Error fetching cart:', error);
@@ -39,12 +48,11 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = async (productId, size, color, qty = 1) => {
     try {
-      const { data } = await axios.post('/cart', {
-        productId,
-        size,
-        color,
-        qty,
-      });
+      const { data } = await axios.post(
+        '/cart',
+        { productId, size, color, qty },
+        authConfig()
+      );
       setCart(data.data);
       return { success: true, message: 'Added to cart' };
     } catch (error) {
@@ -57,7 +65,11 @@ export const CartProvider = ({ children }) => {
 
   const updateCartItem = async (itemId, qty) => {
     try {
-      const { data } = await axios.put(`/cart/${itemId}`, { qty });
+      const { data } = await axios.put(
+        `/cart/${itemId}`,
+        { qty },
+        authConfig()
+      );
       setCart(data.data);
       return { success: true };
     } catch (error) {
@@ -70,7 +82,7 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = async (itemId) => {
     try {
-      const { data } = await axios.delete(`/cart/${itemId}`);
+      const { data } = await axios.delete(`/cart/${itemId}`, authConfig());
       setCart(data.data);
       return { success: true, message: 'Removed from cart' };
     } catch (error) {
@@ -83,7 +95,7 @@ export const CartProvider = ({ children }) => {
 
   const clearCart = async () => {
     try {
-      await axios.delete('/cart');
+      await axios.delete('/cart', authConfig());
       setCart({ items: [], totalPrice: 0 });
       return { success: true };
     } catch (error) {

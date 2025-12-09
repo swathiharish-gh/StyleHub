@@ -51,12 +51,13 @@ const cartSchema = new mongoose.Schema({
 });
 
 // Calculate total price before saving
-cartSchema.pre('save', function(next) {
-  this.totalPrice = this.items.reduce((total, item) => {
-    return total + (item.price * item.qty);
-  }, 0);
-  next();
+cartSchema.pre('save', function () {
+  this.totalPrice = this.items.reduce(
+    (total, item) => total + item.price * item.qty,
+    0
+  );
 });
+
 
 const Cart = mongoose.model('Cart', cartSchema);
 
