@@ -85,14 +85,14 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     order.isPaid = true;
     order.paidAt = Date.now();
     order.paymentResult = {
-      razorpay_order_id: req.body.razorpay_order_id,
-      razorpay_payment_id: req.body.razorpay_payment_id,
-      razorpay_signature: req.body.razorpay_signature,
-      status: 'Success'
+      stripe_payment_intent_id: req.body.paymentIntentId,
+      stripe_payment_status: 'succeeded',
+      paid_at: Date.now()
     };
     order.orderStatus = 'Processing';
 
     // Reduce stock for each product
+    const Product = require('../models/Product');
     for (const item of order.orderItems) {
       await Product.findByIdAndUpdate(item.product, {
         $inc: { stock: -item.qty }
@@ -100,6 +100,7 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     }
 
     // Clear user's cart
+    const Cart = require('../models/Cart');
     await Cart.findOneAndUpdate(
       { user: req.user._id },
       { items: [] }

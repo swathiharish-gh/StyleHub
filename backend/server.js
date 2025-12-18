@@ -11,6 +11,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const stripeRoutes = require('./routes/stripeRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
 // Load environment variables
@@ -45,6 +46,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/stripe', stripeRoutes);
 app.use('/api/ai', aiRoutes);
 
 // Error handling middleware (must be last)

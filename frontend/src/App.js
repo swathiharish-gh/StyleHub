@@ -18,6 +18,7 @@ import Orders from './pages/Orders';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PaymentSuccess from './pages/PaymentSuccess';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -41,6 +42,7 @@ function App() {
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
 
                 {/* Protected Routes */}
                 <Route

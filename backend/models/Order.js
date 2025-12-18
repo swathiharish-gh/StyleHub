@@ -1,109 +1,111 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const orderItemSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'Product'
+    ref: "Product",
   },
   name: {
     type: String,
-    required: true
+    required: true,
   },
   image: {
     type: String,
-    required: true
+    required: true,
   },
   price: {
     type: Number,
-    required: true
+    required: true,
   },
   size: {
     type: String,
-    required: true
+    required: true,
   },
   color: {
     type: String,
-    required: true
+    required: true,
   },
   qty: {
     type: Number,
     required: true,
-    min: 1
-  }
+    min: 1,
+  },
 });
 
-const orderSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
-    ref: 'User'
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "User",
+    },
+    orderItems: [orderItemSchema],
+    shippingAddress: {
+      street: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      pincode: { type: String, required: true },
+      phone: { type: String, required: true },
+    },
+    paymentMethod: {
+      type: String,
+      required: true,
+      default: "Razorpay",
+    },
+    paymentResult: {
+      stripe_payment_intent_id: { type: String },
+      stripe_payment_status: { type: String },
+      paid_at: { type: Date },
+    },
+    itemsPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    shippingPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    taxPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    totalPrice: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+    isPaid: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    paidAt: {
+      type: Date,
+    },
+    isDelivered: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
+    deliveredAt: {
+      type: Date,
+    },
+    orderStatus: {
+      type: String,
+      required: true,
+      enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],
+      default: "Pending",
+    },
   },
-  orderItems: [orderItemSchema],
-  shippingAddress: {
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    pincode: { type: String, required: true },
-    phone: { type: String, required: true }
-  },
-  paymentMethod: {
-    type: String,
-    required: true,
-    default: 'Razorpay'
-  },
-  paymentResult: {
-    razorpay_order_id: { type: String },
-    razorpay_payment_id: { type: String },
-    razorpay_signature: { type: String },
-    status: { type: String }
-  },
-  itemsPrice: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  shippingPrice: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  taxPrice: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  totalPrice: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  isPaid: {
-    type: Boolean,
-    required: true,
-    default: false
-  },
-  paidAt: {
-    type: Date
-  },
-  isDelivered: {
-    type: Boolean,
-    required: true,
-    default: false
-  },
-  deliveredAt: {
-    type: Date
-  },
-  orderStatus: {
-    type: String,
-    required: true,
-    enum: ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'],
-    default: 'Pending'
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model("Order", orderSchema);
 
 module.exports = Order;

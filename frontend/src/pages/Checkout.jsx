@@ -14,6 +14,7 @@ const Checkout = () => {
     pincode: '',
     phone: '',
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,8 +40,10 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calculateTotal();
+      const { itemsPrice, shippingPrice, taxPrice, totalPrice } =
+        calculateTotal();
 
+      // 1️⃣ Create order in DB
       const orderData = {
         orderItems: cart.items.map((item) => ({
           product: item.product,
@@ -52,26 +55,29 @@ const Checkout = () => {
           qty: item.qty,
         })),
         shippingAddress,
-        paymentMethod: 'Razorpay',
+        paymentMethod: 'Stripe',
         itemsPrice,
         shippingPrice,
         taxPrice,
         totalPrice,
       };
 
-      const { data } = await axios.post('/orders', orderData);
+      const orderRes = await axios.post('/orders', orderData);
+      const createdOrder = orderRes.data.data;
 
-      // For now, mark as paid (later we'll integrate Razorpay)
-      await axios.put(`/orders/${data.data._id}/pay`, {
-        razorpay_order_id: 'test_order_' + Date.now(),
-        razorpay_payment_id: 'test_payment_' + Date.now(),
-        razorpay_signature: 'test_signature',
-      });
+      // 2️⃣ Create Stripe Checkout Session
+      const stripeRes = await axios.post(
+        '/stripe/create-checkout-session',
+        {
+          orderId: createdOrder._id,
+        }
+      );
 
-      navigate('/orders');
+      // 3️⃣ Redirect to Stripe Checkout
+      window.location.href = stripeRes.data.url;
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to place order');
-    } finally {
+      console.error('Checkout error:', err);
+      setError(err.response?.data?.message || 'Checkout failed');
       setLoading(false);
     }
   };
@@ -90,10 +96,11 @@ const Checkout = () => {
     );
   }
 
-  const { itemsPrice, shippingPrice, taxPrice, totalPrice } = calculateTotal();
+  const { itemsPrice, shippingPrice, taxPrice, totalPrice } =
+    calculateTotal();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -109,120 +116,100 @@ const Checkout = () => {
             )}
 
             <form onSubmit={handlePlaceOrder} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Street Address
-                </label>
+              <input
+                type="text"
+                name="street"
+                placeholder="Street Address"
+                required
+                value={shippingAddress.street}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded-md"
+              />
+
+              <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
-                  name="street"
+                  name="city"
+                  placeholder="City"
                   required
-                  value={shippingAddress.street}
+                  value={shippingAddress.city}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full border px-3 py-2 rounded-md"
+                />
+                <input
+                  type="text"
+                  name="state"
+                  placeholder="State"
+                  required
+                  value={shippingAddress.state}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded-md"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">City</label>
-                  <input
-                    type="text"
-                    name="city"
-                    required
-                    value={shippingAddress.city}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">State</label>
-                  <input
-                    type="text"
-                    name="state"
-                    required
-                    value={shippingAddress.state}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Pincode
-                  </label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    required
-                    value={shippingAddress.pincode}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    value={shippingAddress.phone}
-                    onChange={handleChange}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
-                  />
-                </div>
+                <input
+                  type="text"
+                  name="pincode"
+                  placeholder="Pincode"
+                  required
+                  value={shippingAddress.pincode}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded-md"
+                />
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone Number"
+                  required
+                  value={shippingAddress.phone}
+                  onChange={handleChange}
+                  className="w-full border px-3 py-2 rounded-md"
+                />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-indigo-600 text-white py-3 rounded-md hover:bg-indigo-700 transition disabled:bg-gray-400"
+                className="w-full bg-indigo-600 text-white py-3 rounded-md disabled:bg-gray-400"
               >
-                {loading ? 'Processing...' : 'Place Order'}
+                {loading ? 'Redirecting…' : 'Proceed to Payment'}
               </button>
             </form>
           </div>
         </div>
 
-        {/* Order Summary */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-md p-6 sticky top-4">
-            <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+        {/* Summary */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-bold mb-4">Order Summary</h2>
 
-            <div className="space-y-3 mb-6">
-              {cart.items.map((item) => (
-                <div key={item._id} className="flex justify-between text-sm">
-                  <span>
-                    {item.name} × {item.qty}
-                  </span>
-                  <span>₹{item.price * item.qty}</span>
-                </div>
-              ))}
+          <div className="space-y-2 mb-4">
+            {cart.items.map((item) => (
+              <div key={item._id} className="flex justify-between text-sm">
+                <span>
+                  {item.name} × {item.qty}
+                </span>
+                <span>₹{item.price * item.qty}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t pt-4 space-y-2">
+            <div className="flex justify-between">
+              <span>Subtotal</span>
+              <span>₹{itemsPrice}</span>
             </div>
-
-            <div className="border-t pt-4 space-y-3">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span className="font-semibold">₹{itemsPrice}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span className="font-semibold">₹{shippingPrice}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax (GST 18%)</span>
-                <span className="font-semibold">₹{taxPrice}</span>
-              </div>
-              <div className="border-t pt-3 flex justify-between text-lg font-bold">
-                <span>Total</span>
-                <span className="text-indigo-600">₹{totalPrice}</span>
-              </div>
+            <div className="flex justify-between">
+              <span>Shipping</span>
+              <span>₹{shippingPrice}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Tax</span>
+              <span>₹{taxPrice}</span>
+            </div>
+            <div className="border-t pt-2 flex justify-between font-bold">
+              <span>Total</span>
+              <span>₹{totalPrice}</span>
             </div>
           </div>
         </div>
